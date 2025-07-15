@@ -43,26 +43,36 @@ if file is not None:
     st.subheader("🗃️ 필터링된 데이터")
     st.dataframe(filtered_df)
 
-    # 3. 지도 시각화
-    if {'lat', 'lon'}.issubset(filtered_df.columns):
-        st.subheader("🗺️ 지도 시각화")
-        st.pydeck_chart(pdk.Deck(
-            initial_view_state=pdk.ViewState(
-                latitude=filtered_df['lat'].mean(),
-                longitude=filtered_df['lon'].mean(),
-                zoom=10,
-                pitch=50,
-            ),
-            layers=[
-                pdk.Layer(
-                    'ScatterplotLayer',
-                    data=filtered_df,
-                    get_position='[lon, lat]',
-                    get_color='[200, 30, 0, 160]',
-                    get_radius=200,
+    # 3. 지도 시각화 - 상권 분석용 컬럼 확인 및 처리
+    st.subheader("🗺️ 상권 지도 시각화")
+    lat_col = st.selectbox("위도 컬럼 선택", df.columns, index=None, placeholder="예: lat, 위도")
+    lon_col = st.selectbox("경도 컬럼 선택", df.columns, index=None, placeholder="예: lon, 경도")
+
+    if lat_col and lon_col and lat_col in filtered_df.columns and lon_col in filtered_df.columns:
+        try:
+            filtered_df[lat_col] = pd.to_numeric(filtered_df[lat_col], errors='coerce')
+            filtered_df[lon_col] = pd.to_numeric(filtered_df[lon_col], errors='coerce')
+            st.pydeck_chart(pdk.Deck(
+                initial_view_state=pdk.ViewState(
+                    latitude=filtered_df[lat_col].mean(),
+                    longitude=filtered_df[lon_col].mean(),
+                    zoom=11,
+                    pitch=50,
                 ),
-            ],
-        ))
+                layers=[
+                    pdk.Layer(
+                        'ScatterplotLayer',
+                        data=filtered_df.dropna(subset=[lat_col, lon_col]),
+                        get_position=f'[{lon_col}, {lat_col}]',
+                        get_color='[200, 30, 0, 160]',
+                        get_radius=200,
+                    ),
+                ],
+            ))
+        except Exception as e:
+            st.warning(f"지도 시각화 중 오류 발생: {e}")
+    else:
+        st.info("지도를 표시하려면 위도와 경도 컬럼을 선택하세요.")
 
     # 4. 그래프 그리기
     st.subheader("📈 그래프 그리기")
