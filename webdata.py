@@ -21,7 +21,13 @@ st.sidebar.header("📁 데이터 업로드")
 file = st.sidebar.file_uploader("CSV 파일을 업로드하세요", type=["csv"])
 
 if file is not None:
-    df = pd.read_csv(file)
+    # 파일 인코딩 처리
+    try:
+        df = pd.read_csv(file)
+    except UnicodeDecodeError:
+        file.seek(0)
+        df = pd.read_csv(file, encoding='cp949')
+
     st.subheader("🔍 데이터 미리보기")
     st.dataframe(df)
 
