@@ -69,29 +69,35 @@ if file is not None:
     numeric_cols = filtered_df.select_dtypes(include='number').columns
     graph_type = st.selectbox("그래프 종류", ["히스토그램", "산점도", "선그래프", "상관관계 히트맵"])
 
-    if graph_type == "히스토그램":
-        col = st.selectbox("히스토그램 열 선택", numeric_cols)
-        fig, ax = plt.subplots()
-        ax.hist(filtered_df[col], bins=20, color='skyblue')
-        st.pyplot(fig)
+    if len(numeric_cols) == 0:
+        st.warning("그래프를 그릴 수 있는 수치형 컬럼이 없습니다.")
+    else:
+        if graph_type == "히스토그램":
+            col = st.selectbox("히스토그램 열 선택", numeric_cols)
+            if col:
+                fig, ax = plt.subplots()
+                ax.hist(filtered_df[col].dropna(), bins=20, color='skyblue')
+                st.pyplot(fig)
 
-    elif graph_type == "산점도":
-        x = st.selectbox("X축", numeric_cols)
-        y = st.selectbox("Y축", numeric_cols)
-        fig = px.scatter(filtered_df, x=x, y=y, title="산점도")
-        st.plotly_chart(fig)
+        elif graph_type == "산점도":
+            x = st.selectbox("X축", numeric_cols)
+            y = st.selectbox("Y축", numeric_cols)
+            if x and y:
+                fig = px.scatter(filtered_df, x=x, y=y, title="산점도")
+                st.plotly_chart(fig)
 
-    elif graph_type == "선그래프":
-        x = st.selectbox("X축 (선)", numeric_cols)
-        y = st.selectbox("Y축 (선)", numeric_cols)
-        fig = px.line(filtered_df, x=x, y=y, title="선그래프")
-        st.plotly_chart(fig)
+        elif graph_type == "선그래프":
+            x = st.selectbox("X축 (선)", numeric_cols)
+            y = st.selectbox("Y축 (선)", numeric_cols)
+            if x and y:
+                fig = px.line(filtered_df, x=x, y=y, title="선그래프")
+                st.plotly_chart(fig)
 
-    elif graph_type == "상관관계 히트맵":
-        corr = filtered_df[numeric_cols].corr()
-        fig, ax = plt.subplots()
-        sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax)
-        st.pyplot(fig)
+        elif graph_type == "상관관계 히트맵":
+            corr = filtered_df[numeric_cols].corr()
+            fig, ax = plt.subplots()
+            sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax)
+            st.pyplot(fig)
 
     # 5. 간단한 머신러닝
     st.subheader("🧠 간단한 머신러닝 분석")
@@ -100,7 +106,7 @@ if file is not None:
     if ml_mode == "회귀 분석":
         target = st.selectbox("예측 대상 (Y) 열", numeric_cols)
         features = st.multiselect("입력 변수 (X) 열", [col for col in numeric_cols if col != target])
-        if features:
+        if features and target:
             X = filtered_df[features]
             y = filtered_df[target]
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -112,7 +118,7 @@ if file is not None:
 
     elif ml_mode == "KMeans 클러스터링":
         k_features = st.multiselect("클러스터링할 열 선택", numeric_cols)
-        if k_features:
+        if len(k_features) >= 2:
             k = st.slider("클러스터 수 (K)", 2, 10, 3)
             kmeans = KMeans(n_clusters=k, n_init='auto')
             kmeans.fit(filtered_df[k_features])
@@ -120,6 +126,8 @@ if file is not None:
             st.write(filtered_df[['클러스터'] + list(k_features)])
             fig = px.scatter(filtered_df, x=k_features[0], y=k_features[1], color='클러스터', title="클러스터링 시각화")
             st.plotly_chart(fig)
+        else:
+            st.warning("클러스터링을 위해 최소 2개의 수치형 열을 선택해야 합니다.")
 
     # 6. 결과 다운로드
     st.subheader("📥 결과 다운로드")
