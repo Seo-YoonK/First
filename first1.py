@@ -41,7 +41,3 @@ if True:
         }).set_index('연령')
         st.line_chart(age_df)
 
-st.write("top5 도시 이름 목록:", top5['행정구역'].tolist())
-st.subheader("상위 5개 행정구역 이름 확인용 (좌표 매핑용)")
-st.write(top5['행정구역'].tolist())
-
