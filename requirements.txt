@@ -1,1 +1,4 @@
-
+yfinance
+plotly
+folium
+streamlit-folium
