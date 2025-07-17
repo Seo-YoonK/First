@@ -40,3 +40,5 @@ if True:
             '인구수': age_data.values
         }).set_index('연령')
         st.line_chart(age_df)
+
+st.write("top5 도시 이름 목록:", top5['행정구역'].tolist())
